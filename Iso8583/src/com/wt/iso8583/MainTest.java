@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.wt.iso8583.utils.ByteUtils;
+import com.wt.iso8583.utils.Coder;
 
 public class MainTest {
 
@@ -20,13 +21,15 @@ public class MainTest {
 //				+ "05524F864445324445454536";
 		//½âÎö8583Êý¾Ý
 //		String card="00 96 60 00 00 00 03 60 31 00 11 43 00 02 00 70 20 04 C0 20 C0 98 15 19 62 16 61 61 01 00 84 66 88 70 00 00 00 00 00 00 00 00 10 00 00 23 02 10 00 12 48 72 58 39 C8 68 CA C8 09 87 0E 98 5A AE 58 25 B9 E7 B7 79 A4 19 1B 7E 3A 30 32 30 30 30 30 38 31 38 32 36 30 37 35 35 34 35 31 31 30 30 30 32 31 35 36 AB 67 09 ED 74 20 9D 42 26 00 00 00 00 00 00 00 00 14 22 00 29 08 00 00 00 00 16 49 16 3A 25 61 83 55 91 B3 83 8B 97 05 52 4F 86 44 45 32 44 45 45 45 36";
-		FileInputStream fileInputStream = new FileInputStream("C:\\Users\\yufangwu\\Desktop\\R1190396435819-IPM..bin");
+		FileInputStream fileInputStream = new FileInputStream("C:\\Users\\yufangwu\\Desktop\\R1190396435819-IPM.(2).bin");
         int bytelength = fileInputStream.available();
         byte[] bytes = new byte[bytelength-4];
         fileInputStream.read(bytes,0,4);
 		fileInputStream.read(bytes,0,bytelength-4);
         String str8583 = ByteUtils.getHexStr(bytes);
-		System.out.println(str8583);
+		//System.out.println(str8583);
+//		String strOne ="F0 F4 F0";
+//		System.out.println(new String(Coder.EBCDICToASCII(ByteUtils.getByte(strOne))));
 		ByteArrayOutputStream outAr=new ByteArrayOutputStream();
 		outAr.write(ByteUtils.getByteByNoSpli(str8583));
 		Iso8583Utils utils=new Iso8583Utils();

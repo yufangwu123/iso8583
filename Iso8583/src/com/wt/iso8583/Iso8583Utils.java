@@ -11,6 +11,7 @@ import com.wt.iso8583.bean.Iso8583Entity;
 import com.wt.iso8583.bean.LengthType;
 import com.wt.iso8583.utils.BitArray;
 import com.wt.iso8583.utils.ByteUtils;
+import com.wt.iso8583.utils.Coder;
 import com.wt.iso8583.utils.Converts;
 
 public class Iso8583Utils {
@@ -162,9 +163,13 @@ public class Iso8583Utils {
 		//4、封装 BitArray类  1.解析位图，得到域编号 2.设置位图，设置域编号
 		BitArray bitmap = new BitArray(bitMapBitCount, bitmapArray);// 位图
 		for (int i = 0; i < bitMapBitCount; i++) { // 遍历位图
+            if(i % 64 == 0){
+            	continue;
+			}
 			boolean bitHave = bitmap.get(i);
 			if (bitHave) {
 				//5、得到标准域实体信息对象，用于具体每个域解析数据
+				System.out.println(i+1);
 				Iso8583Entity entity = DomainInfoForm.iso.get(i);
 				LengthType lentype = entity.getLengthType();
 				int len = 0;
@@ -173,50 +178,26 @@ public class Iso8583Utils {
 				switch (lentype) {
 					case FIX_LEN://如果是定长
 						len = entity.getLength();
-						oldLen = len;
-						if ((entity.getEncodeType() == EncodeType.L_BCD)
-								|| (entity.getEncodeType() == EncodeType.R_BCD) ) {
-							if (((len % 2) != 0)) {
-								len = len + 1;
-							}
-							len = len / 2;//则域数据byte大小为 域长度/2即可。
-						}
 						break;
 					case LLVAR_LEN://如果是不定长，长度范围为：0-99，
-						byte[] ll = new byte[1];//则长度为1个字节
+						byte[] ll = new byte[2];//则长度为1个字节
 						try {
 							datas.read(ll);//读取1个字节域长度
 						} catch (IOException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-						len = ByteUtils.bytesToInt(ll);//进行转码
-						oldLen = len;
-						if (entity.getEncodeType() == EncodeType.L_BCD
-								|| entity.getEncodeType() == EncodeType.R_BCD) {
-							if (len % 2 != 0) {
-								len = len + 1;
-							}
-							len = len / 2;
-						}
+						len = ByteUtils.bytesToIntTwo(Coder.EBCDICToASCII(ll));//进行转码
 						break;
 					case LLLVAR_LEN://如果是不定长，长度范围为：0-999，
-						byte[] lll = new byte[2];//则长度为2个字节
+						byte[] lll = new byte[3];//则长度为2个字节
 						try {
 							datas.read(lll);//读取2个字节域长度
 						} catch (IOException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-						len = ByteUtils.bytesToInt(lll);//进行转码
-						oldLen = len;
-						if (entity.getEncodeType() == EncodeType.L_BCD
-								|| entity.getEncodeType() == EncodeType.R_BCD) {
-							if (len % 2 != 0) {
-								len = len + 1;
-							}
-							len = len / 2;
-						}
+						len = ByteUtils.bytesToIntTwo(Coder.EBCDICToASCII(lll));//进行转码
 						break;
 					default:
 						break;
@@ -227,26 +208,7 @@ public class Iso8583Utils {
 				//读取5.1中计算出来的字节长度大小的域数据
 				datas.read(contentByte, 0, len);
 				String contentStr = "";
-				if (patternType == EncodeType.L_ASC) { // 左对齐ASCII
-					contentStr = new String(contentByte);
-				} else if (patternType == EncodeType.R_ASC) { // 右对齐ASCII
-					try {
-						contentStr = new String(contentByte,"GBK");
-					} catch (UnsupportedEncodingException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				} else if (patternType == EncodeType.L_BCD) { // 左对齐BCD
-					contentStr = Converts.BCD2ASC(contentByte);
-					int start=lentype==LengthType.FIX_LEN?0:(contentStr.length()==oldLen?0:contentStr.length()-oldLen-1);
-					contentStr = contentStr.substring(start, oldLen); // 对BCD码进行截取
-				} else if (patternType == EncodeType.R_BCD) { // 右对齐BCD
-					contentStr = Converts.BCD2ASC(contentByte);
-					contentStr = contentStr.substring(0, oldLen); // 对BCD码进行截取
-				}else if(patternType==EncodeType.BINARY){
-					contentStr=ByteUtils.getHexStr(contentByte);
-				}
-			
+				contentStr = new String(Coder.EBCDICToASCII(contentByte));
 				mp.put(i + 1, contentStr);
 			}
 		}

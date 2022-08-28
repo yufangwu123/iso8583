@@ -8,7 +8,10 @@ public class ByteUtils {
 	public static int bytesToInt(byte[] bytes) {
 		return Integer.parseInt(Converts.BCD2ASC(bytes),10);
 	}
-	
+	public static int bytesToIntTwo(byte[] bytes) {
+		return Integer.parseInt(new String(bytes),10);
+	}
+
 	public static String getHexStr(byte[] b) {
 		StringBuilder builder = new StringBuilder();
 		ByteArrayInputStream input = new ByteArrayInputStream(b);
